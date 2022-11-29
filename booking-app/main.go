@@ -92,7 +92,7 @@ func getUserInput() (string, string, string, uint) {
 func bookTicket(remainingTickets uint, userTickets uint, firstName string, lastName string, email string) {
 	remainingTickets = remainingTickets - userTickets
 
-	// Create map for user
+	// Create struct for user
 	var userData = UserData{
 		firstName:       firstName,
 		lastName:        lastName,
