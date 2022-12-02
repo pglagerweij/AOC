@@ -33,15 +33,15 @@ func main() {
 
 func calculateScore(array []string) int {
 	scoring_table := map[[2]string]int{
-		[2]string{"A", "X"}: 3, // Rock vs Sciccors - lose (0+3)
-		[2]string{"A", "Y"}: 4, // Rock vs Rock  - draw (3+1)
-		[2]string{"A", "Z"}: 8, // Rock vs paper - win (6+2)
-		[2]string{"B", "X"}: 1, // Paper vs Rock  - lose (0+1)
-		[2]string{"B", "Y"}: 5, // Paper vs Paper - draw (3+2)
-		[2]string{"B", "Z"}: 9, // Paper vs Sciccors -  win (6+3)
-		[2]string{"C", "X"}: 2, // Sciccors vs paper  - lose (0+2)
-		[2]string{"C", "Y"}: 6, // Sciccors vs Sciccors -  draw (3+3)
-		[2]string{"C", "Z"}: 7, // Sciccors vs Rock  - win (6+1)
+		{"A", "X"}: 3, // Rock vs Sciccors - lose (0+3)
+		{"A", "Y"}: 4, // Rock vs Rock  - draw (3+1)
+		{"A", "Z"}: 8, // Rock vs paper - win (6+2)
+		{"B", "X"}: 1, // Paper vs Rock  - lose (0+1)
+		{"B", "Y"}: 5, // Paper vs Paper - draw (3+2)
+		{"B", "Z"}: 9, // Paper vs Sciccors -  win (6+3)
+		{"C", "X"}: 2, // Sciccors vs paper  - lose (0+2)
+		{"C", "Y"}: 6, // Sciccors vs Sciccors -  draw (3+3)
+		{"C", "Z"}: 7, // Sciccors vs Rock  - win (6+1)
 	}
 	var score int = 0
 	var yourself string = array[1]
