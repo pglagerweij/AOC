@@ -1,0 +1,38 @@
+ls
+53302 chvtw.czb
+240038 dwhl.nrn
+124868 dwhl.vvb
+dir fml
+dir jbgpgvj
+dir qjphltd
+dir wlfprc
+dir zqvh
+dir zzmgz
+$ cd fml
+$ ls
+dir bztjtqg
+176916 crgzcmrt.jlr
+199024 gpnmqlr.rdb
+dir lwpbbb
+dir nsdgz
+186077 sfrlrc.jtj
+$ cd bztjtqg
+$ ls
+dir dwhl
+dir lwtrqrqq
+dir nsdgz
+105281 qlsr
+$ cd dwhl
+$ ls
+dir fqdzv
+198583 mmrplb.ncb
+42601 qmdjhrsg
+68484 rnmsmcqn.cwf
+dir wlfprc
+$ cd fqdzv
+$ ls
+140953 mfprqmdp.pnl
+$ cd ..
+$ cd wlfprc
+$ ls
+180121 swjgs.glp
