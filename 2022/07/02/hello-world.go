@@ -72,10 +72,7 @@ func main() {
 		}
 		
 	}
-	// fmt.Printf("%v main dir total is\n", allFiles)
-	// fmt.Printf("/fml/bztjtqg/dwhl/wlfprc/ total is %v\n", allFiles["/fml/bztjtqg/dwhl/wlfprc/"].dirSize)
-	// fmt.Printf("/fml/bztjtqg/dwhl/fqdzv/ total is %v\n", allFiles["/fml/bztjtqg/dwhl/fqdzv/"].dirSize)
-	// fmt.Printf("/fml/bztjtqg/dwhl/ total is %v\n", allFiles["/"].dirSize)
+
 	fmt.Printf("The total weigth is: %v", totalResult)
 
 }
@@ -99,17 +96,10 @@ func calculateSizes(allFiles map[string]Directory, allDepths map[int][]string,  
 		// fmt.Printf("all firs in current dir: %v\n", allFiles[dir].subDirs)
 		totalDirSizeDirs := 0
 		for _, dirsToLoop := range allFiles[dir].subDirs {
-			// fmt.Printf("dirs we are checking: %v\n", dirsToLoop)
-			// fmt.Printf("%v\n", dir + dirsToLoop + "/")
-			// fmt.Printf("%v\n", allFiles[dir + dirsToLoop + "/"].dirSize)
 			currentSizeDir := allFiles[dir + dirsToLoop + "/"].dirSize
-			// fmt.Printf("%v\n", currentSizeDir)
-			// currentSizeDir := 0
 			totalDirSizeDirs += currentSizeDir
 			
 		}
-		// allFiles[dir].dirSize = totalDirSizeFiles
-		// fmt.Printf("total dir size: %v\n", totalDirSizeDirs)
 		currentDir := allFiles[dir]
 		currentDir.dirSize = totalDirSizeFiles + totalDirSizeDirs
 		allFiles[dir] = currentDir
