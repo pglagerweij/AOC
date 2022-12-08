@@ -39,12 +39,12 @@ func main() {
 	for rowNumber := 1; rowNumber < totalSize-1; rowNumber++ {
 		for columnNumber := 1; columnNumber < totalSize-1; columnNumber++ {
 			sliceArrayLeft, sliceArrayRight, sliceArrayTop, sliceArrayBottom := getSlices(threedim, rowNumber, columnNumber)
-			fmt.Printf("%v is visible %v \n", sliceArrayRight, determineView(sliceArrayRight))
+			// fmt.Printf("%v is visible %v \n", sliceArrayRight, determineView(sliceArrayRight))
 			sliceArrayLeftReverse := Reverse(sliceArrayLeft)
-			fmt.Printf("%v is visible %v \n", sliceArrayLeft, determineView(sliceArrayLeftReverse))
-			fmt.Printf("%v is visible %v \n", sliceArrayBottom, determineView(sliceArrayBottom))
+			// fmt.Printf("%v is visible %v \n", sliceArrayLeft, determineView(sliceArrayLeftReverse))
+			// fmt.Printf("%v is visible %v \n", sliceArrayBottom, determineView(sliceArrayBottom))
 			sliceArrayTopReverse := Reverse(sliceArrayTop)
-			fmt.Printf("%v is visible %v \n", sliceArrayTop, determineView(sliceArrayTopReverse))
+			// fmt.Printf("%v is visible %v \n", sliceArrayTop, determineView(sliceArrayTopReverse))
 			viewLeft := determineView(sliceArrayLeftReverse)
 			viewRight := determineView(sliceArrayRight)
 			viewDown := determineView(sliceArrayTopReverse)
