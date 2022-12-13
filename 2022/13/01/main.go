@@ -75,50 +75,6 @@ func compareElementss2(left string, right string) string {
 	}
 	panic("no comparision found for" + left + " and " + right)
 }
-
-func compareElementss(left string, right string) string {
-	fmt.Printf("Compare %v vs %v\n", left, right)
-	leftElement, restLeft := getElement(left)
-	rightElement, restRight := getElement(right)
-	fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
-	if leftElement == rightElement {
-		result := compareElementss(restLeft, restRight)
-		return result
-	} else if leftElement == "" {
-		return "right"
-	} else if rightElement == "" {
-		return "left"
-	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
-		fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
-		result := compareElementss("["+leftElement+"]", rightElement)
-		return result
-	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
-		fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
-		result := compareElementss(leftElement, "["+rightElement+"]")
-		return result
-	} else {
-		_, restLeft_nest := getElement(leftElement)
-		_, restRight_nest := getElement(rightElement)
-		if restLeft_nest == "" && restRight_nest == "" {
-			leftint, _ := strconv.Atoi(leftElement)
-			rightint, _ := strconv.Atoi(rightElement)
-			if leftint < rightint {
-				fmt.Printf("Left side is smaller, so inputs are in the right order\n")
-				return "right"
-			} else if leftint > rightint {
-				fmt.Printf("Right side is smaller, so inputs are not in the right order\n")
-				return "left"
-			} else {
-				panic("left and right didnt match" + leftElement + " and " + rightElement)
-			}
-		} else {
-			result := compareElementss(restLeft_nest, restRight_nest)
-			return result
-		}
-
-	}
-}
-
 func getElement(input string) (string, string) {
 	bracketCounter := 1
 	var leftBracket byte = '['
@@ -142,8 +98,6 @@ func getElement(input string) (string, string) {
 
 	}
 	return "[]", ""
-	// fmt.Printf("hi input is %v", input)
-	// panic("didnt find match on input" + input)
 }
 
 func sumSlice(numarray []int) int {
