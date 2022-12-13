@@ -64,11 +64,7 @@ func main() {
 }
 
 func isLeftEarly(leftInput string, rightInput string) string {
-	if leftInput == "" {
-		return "right"
-	} else if rightInput == "" {
-		return "left"
-	} else if (leftInput[0] != '[') && (rightInput[0] != '[') {
+	if (leftInput[0] != '[') && (rightInput[0] != '[') {
 		leftint, _ := strconv.Atoi(leftInput)
 		rightint, _ := strconv.Atoi(rightInput)
 		if leftint < rightint {
@@ -90,6 +86,18 @@ func compareElementss(left string, right string) string {
 	fmt.Printf("comparing main argument %v with %v\n", leftElement, rightElement)
 	if leftElement == rightElement {
 		result := compareElementss(restLeft, restRight)
+		return result
+	} else if leftElement == "" {
+		return "right"
+	} else if rightElement == "" {
+		return "left"
+	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
+		fmt.Printf("converting left element to list %v\n", leftElement)
+		result := compareElementss("["+leftElement+"]", rightElement)
+		return result
+	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
+		fmt.Printf("converting right element to list: %v\n", rightElement)
+		result := compareElementss(leftElement, "["+rightElement+"]")
 		return result
 	} else {
 		fmt.Printf("really comparing now element %v and %v\n", leftElement, rightElement)
