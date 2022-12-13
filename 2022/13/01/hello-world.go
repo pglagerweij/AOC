@@ -100,9 +100,17 @@ func compareElementss(left string, right string) string {
 		result := compareElementss(leftElement, "["+rightElement+"]")
 		return result
 	} else {
-		fmt.Printf("really comparing now element %v and %v\n", leftElement, rightElement)
-		result := isLeftEarly(leftElement, rightElement)
-		return result
+		_, restLeft_nest := getElement(leftElement)
+		_, restRight_nest := getElement(rightElement)
+		if restLeft_nest == "" && restRight_nest == "" {
+			fmt.Printf("really comparing now element %v and %v\n", leftElement, rightElement)
+			result := isLeftEarly(leftElement, rightElement)
+			return result
+		} else {
+			result := compareElementss(restLeft_nest, restRight_nest)
+			return result
+		}
+
 	}
 }
 
