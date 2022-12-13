@@ -23,67 +23,64 @@ func main() {
 	for index, element := range s3 {
 		left := strings.Split(element, "\n")[0]
 		right := strings.Split(element, "\n")[1]
-		// fmt.Printf("comparing %v with %v\n", left, right)
-		resultTotal := compareElementss(left, right)
+		resultTotal := compareElementss2(left, right)
 		if resultTotal == "right" {
 			largerIndex = append(largerIndex, index+1)
 		}
-		fmt.Printf("comparing %v with %v result is %v\n", left, right, resultTotal)
 	}
-	// leftElement, restLeft := getElement(left)
-	// rightElement, restRight := getElement(right)
-	// fmt.Printf("comparing %v with %v\n", leftElement, rightElement)
-	// if leftElement == rightElement {
-	// 	fmt.Printf("comparing %v with %v\n", restLeft, restRight)
-	// 	leftElement2, restLeft2 := getElement(restLeft)
-	// 	rightElement2, restRight2 := getElement(restRight)
-	// 	fmt.Printf("comparing %v with %v\n", leftElement2, rightElement2)
-	// 	fmt.Printf("leftovers %v with %v\n", restLeft2, restRight2)
-	// 	// result := compareElement(restLeft, restRight)
-	// 	// return result
-	// } else {
-	// 	fmt.Printf("really comparing now")
-	// }
-
-	// largerIndex := []int{}
-	// for index, element := range s3 {
-	// 	elementLeft := strings.Split(element, "\n")[0]
-	// 	elementRight := strings.Split(element, "\n")[1]
-	// 	result := compareElementss(elementLeft, elementLeft)
-	// 	if result == "right" {
-	// 		largerIndex = append(largerIndex, index+1)
-	// 	}
-	// 	fmt.Printf("On index %v comparing %v with %v\n", index+1, elementLeft, elementRight)
-
-	// }
 
 	// Sum items for final answer
 	fmt.Printf("The final indexes are %v\n", largerIndex)
-
 	fmt.Printf("The final sum of indexes is %v\n", sumSlice(largerIndex))
 }
 
-func isLeftEarly(leftInput string, rightInput string) string {
-	if (leftInput[0] != '[') && (rightInput[0] != '[') {
-		leftint, _ := strconv.Atoi(leftInput)
-		rightint, _ := strconv.Atoi(rightInput)
+func compareElementss2(left string, right string) string {
+	fmt.Printf("Compare %v vs %v\n", left, right)
+	if (left == "") || (left == "[]") {
+		fmt.Printf("Left side ran out of items, so inputs are in the right order\n")
+		return "right"
+	} else if (right == "") || (right == "[]") {
+		fmt.Printf("Right side ran out of items, so inputs are not in the right order\n")
+		return "left"
+	}
+	leftElement, restLeft := getElement(left)
+	rightElement, restRight := getElement(right)
+	fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
+	if leftElement == rightElement {
+		result := compareElementss2(restLeft, restRight)
+		return result
+	} else if (leftElement[0] != '[') && rightElement[0] != '[' {
+		leftint, _ := strconv.Atoi(leftElement)
+		rightint, _ := strconv.Atoi(rightElement)
 		if leftint < rightint {
+			fmt.Printf("Left side is smaller, so inputs are in the right order\n")
 			return "right"
 		} else if leftint > rightint {
+			fmt.Printf("Right side is smaller, so inputs are not in the right order\n")
 			return "left"
 		} else {
-			panic("left and right didnt match" + leftInput + " and " + rightInput)
+			panic("left and right didnt match" + leftElement + " and " + rightElement)
 		}
-	} else {
-		return "stillhavetobuildcomparison"
+	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
+		fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
+		result := compareElementss2("["+leftElement+"]", rightElement)
+		return result
+	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
+		fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
+		result := compareElementss2(leftElement, "["+rightElement+"]")
+		return result
+	} else if (rightElement == "[]") || (leftElement == "[]") || (leftElement[0] == '[' && rightElement[0] == '[') {
+		result := compareElementss2(leftElement, rightElement)
+		return result
 	}
+	panic("no comparision found for" + left + " and " + right)
 }
 
 func compareElementss(left string, right string) string {
-	fmt.Printf("comparing %v with %v\n", left, right)
+	fmt.Printf("Compare %v vs %v\n", left, right)
 	leftElement, restLeft := getElement(left)
 	rightElement, restRight := getElement(right)
-	fmt.Printf("comparing main argument %v with %v\n", leftElement, rightElement)
+	fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
 	if leftElement == rightElement {
 		result := compareElementss(restLeft, restRight)
 		return result
@@ -92,20 +89,28 @@ func compareElementss(left string, right string) string {
 	} else if rightElement == "" {
 		return "left"
 	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
-		fmt.Printf("converting left element to list %v\n", leftElement)
+		fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
 		result := compareElementss("["+leftElement+"]", rightElement)
 		return result
 	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
-		fmt.Printf("converting right element to list: %v\n", rightElement)
+		fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
 		result := compareElementss(leftElement, "["+rightElement+"]")
 		return result
 	} else {
 		_, restLeft_nest := getElement(leftElement)
 		_, restRight_nest := getElement(rightElement)
 		if restLeft_nest == "" && restRight_nest == "" {
-			fmt.Printf("really comparing now element %v and %v\n", leftElement, rightElement)
-			result := isLeftEarly(leftElement, rightElement)
-			return result
+			leftint, _ := strconv.Atoi(leftElement)
+			rightint, _ := strconv.Atoi(rightElement)
+			if leftint < rightint {
+				fmt.Printf("Left side is smaller, so inputs are in the right order\n")
+				return "right"
+			} else if leftint > rightint {
+				fmt.Printf("Right side is smaller, so inputs are not in the right order\n")
+				return "left"
+			} else {
+				panic("left and right didnt match" + leftElement + " and " + rightElement)
+			}
 		} else {
 			result := compareElementss(restLeft_nest, restRight_nest)
 			return result
@@ -139,10 +144,6 @@ func getElement(input string) (string, string) {
 	return "[]", ""
 	// fmt.Printf("hi input is %v", input)
 	// panic("didnt find match on input" + input)
-}
-
-func compareElements(left string, right string) bool {
-	return true
 }
 
 func sumSlice(numarray []int) int {
