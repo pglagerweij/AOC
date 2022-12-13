@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var inputFile string = "trial.txt"
+var inputFile string = "input.txt"
 
 func main() {
 
@@ -17,25 +17,57 @@ func main() {
 	}
 	// convert the file binary into a string using string
 	fileContent := string(file)
-	s := strings.ReplaceAll(fileContent, "\n\n", ";")
-	s3 := strings.Split(s, ";")
-	largerIndex := []int{}
-	for index, element := range s3 {
-		left := strings.Split(element, "\n")[0]
-		right := strings.Split(element, "\n")[1]
-		resultTotal := compareElementss2(left, right)
-		if resultTotal == "right" {
-			largerIndex = append(largerIndex, index+1)
+	s := strings.ReplaceAll(fileContent, "\n\n", "\n")
+	s3 := strings.Split(s, "\n")
+	s3 = append(s3, "[[2]]")
+	s3 = append(s3, "[[6]]")
+	orderedElements := []string{}
+	for _, elementToAdd := range s3 {
+		fmt.Printf("checking element %v\n", elementToAdd)
+		if len(orderedElements) == 0 {
+			orderedElements = append(orderedElements, elementToAdd)
+		} else {
+			for index, compareElement := range orderedElements {
+				fmt.Printf("Checking compared to element %v\n", compareElement)
+				resultTotal := compareElementss2(compareElement, elementToAdd)
+				fmt.Printf("The compared elements have result are %v\n", resultTotal)
+				if resultTotal == "left" {
+					orderedElements = insert(orderedElements, index, elementToAdd)
+					break
+				} else if resultTotal == "right" && (index == len(orderedElements)-1) {
+					orderedElements = append(orderedElements, elementToAdd)
+				}
+
+			}
+			// fmt.Printf("The compared elements have result are %v\n", orderedElements)
 		}
 	}
 
 	// Sum items for final answer
-	fmt.Printf("The final indexes are %v\n", largerIndex)
-	fmt.Printf("The final sum of indexes is %v\n", sumSlice(largerIndex))
+	var index1 int
+	var index2 int
+	for index, element := range orderedElements {
+		if element == "[[2]]" {
+			index1 = index + 1
+		} else if element == "[[6]]" {
+			index2 = index + 1
+		}
+	}
+	fmt.Printf("The final answer is %v\n", index1*index2)
+	// fmt.Printf("The final sum of indexes is %v\n", sumSlice(largerIndex))
+}
+
+func insert(a []string, index int, value string) []string {
+	if len(a) == index { // nil or empty slice or after last element
+		return append(a, value)
+	}
+	a = append(a[:index+1], a[index:]...) // index < len(a)
+	a[index] = value
+	return a
 }
 
 func compareElementss2(left string, right string) string {
-	fmt.Printf("Compare %v vs %v\n", left, right)
+	// fmt.Printf("Compare %v vs %v\n", left, right)
 	if (left == "") || (left == "[]") {
 		fmt.Printf("Left side ran out of items, so inputs are in the right order\n")
 		return "right"
@@ -45,7 +77,7 @@ func compareElementss2(left string, right string) string {
 	}
 	leftElement, restLeft := getElement(left)
 	rightElement, restRight := getElement(right)
-	fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
+	// fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
 	if leftElement == rightElement {
 		result := compareElementss2(restLeft, restRight)
 		return result
@@ -62,11 +94,11 @@ func compareElementss2(left string, right string) string {
 			panic("left and right didnt match" + leftElement + " and " + rightElement)
 		}
 	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
-		fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
+		// fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
 		result := compareElementss2("["+leftElement+"]", rightElement)
 		return result
 	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
-		fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
+		// fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
 		result := compareElementss2(leftElement, "["+rightElement+"]")
 		return result
 	} else if (rightElement == "[]") || (leftElement == "[]") || (leftElement[0] == '[' && rightElement[0] == '[') {
@@ -74,49 +106,6 @@ func compareElementss2(left string, right string) string {
 		return result
 	}
 	panic("no comparision found for" + left + " and " + right)
-}
-
-func compareElementss(left string, right string) string {
-	fmt.Printf("Compare %v vs %v\n", left, right)
-	leftElement, restLeft := getElement(left)
-	rightElement, restRight := getElement(right)
-	fmt.Printf("Compare %v vs %v\n", leftElement, rightElement)
-	if leftElement == rightElement {
-		result := compareElementss(restLeft, restRight)
-		return result
-	} else if leftElement == "" {
-		return "right"
-	} else if rightElement == "" {
-		return "left"
-	} else if (leftElement[0] != '[') && rightElement[0] == '[' {
-		fmt.Printf("Mixed types; convert left to %v and retry comparison\n", "["+leftElement+"]")
-		result := compareElementss("["+leftElement+"]", rightElement)
-		return result
-	} else if (leftElement[0] == '[') && rightElement[0] != '[' {
-		fmt.Printf("Mixed types; convert right to %v and retry comparison\n", "["+rightElement+"]")
-		result := compareElementss(leftElement, "["+rightElement+"]")
-		return result
-	} else {
-		_, restLeft_nest := getElement(leftElement)
-		_, restRight_nest := getElement(rightElement)
-		if restLeft_nest == "" && restRight_nest == "" {
-			leftint, _ := strconv.Atoi(leftElement)
-			rightint, _ := strconv.Atoi(rightElement)
-			if leftint < rightint {
-				fmt.Printf("Left side is smaller, so inputs are in the right order\n")
-				return "right"
-			} else if leftint > rightint {
-				fmt.Printf("Right side is smaller, so inputs are not in the right order\n")
-				return "left"
-			} else {
-				panic("left and right didnt match" + leftElement + " and " + rightElement)
-			}
-		} else {
-			result := compareElementss(restLeft_nest, restRight_nest)
-			return result
-		}
-
-	}
 }
 
 func getElement(input string) (string, string) {
