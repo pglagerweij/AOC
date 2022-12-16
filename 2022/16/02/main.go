@@ -5,15 +5,20 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	"github.com/ernestosuarez/itertools"
 )
 
 // var inputFile string = "trial.txt"
-// var inputLength int = 500
-// var inputHeight int = 0
 
 var inputFile string = "input.txt"
-var inputLength int = 500
-var inputHeight int = 000
+
+var maxSteps int = 30
+
+type graph struct {
+	to string
+	wt int
+}
 
 func main() {
 
@@ -23,191 +28,142 @@ func main() {
 	}
 	// convert the file binary into a string using string
 	fileContent := string(file)
-	s := strings.ReplaceAll(fileContent, "\n", ";")
-	s3 := strings.Split(s, ";")
+	s := strings.Split(fileContent, "\n")
 
-	maxElementX := 500
-	minElementX := 500
-	maxElementY := inputHeight
-	minElementY := inputHeight
-	for _, element := range s3 {
-		elements := strings.Split(element, " -> ")
-		for _, element := range elements {
-			number := strings.Split(element, ",")
-			elementX, _ := strconv.Atoi(number[0])
-			elementY, _ := strconv.Atoi(number[1])
-			if elementX > maxElementX {
-				maxElementX = elementX
+	var flows map[string]int = make(map[string]int)
+	valves := make([]string, len(s))
+
+	graf := make(map[string][]graph, len(valves))
+	for index, element := range s {
+		splitted := strings.Split(element, "; ")
+		l := splitted[0]
+		lsplit := strings.Split(l, "=")
+		flowrate, _ := strconv.Atoi(strings.TrimSpace(lsplit[1]))
+		valvenumber := l[6:8]
+		valves[index] = valvenumber
+		// fmt.Printf("in valve %v the flow is %v\n", valvenumber, flowrate)
+		flows[valvenumber] = flowrate
+
+		// Right side
+		r := splitted[1]
+		graphss := []graph{}
+		if strings.HasPrefix(r, "tunnels lead to") {
+			rsplit := strings.Split(r, "valves ")
+			to_valves := strings.Split(strings.TrimSpace(rsplit[1]), ", ")
+			// fmt.Printf("%v\n", to_valves)
+
+			for _, elem := range to_valves {
+				graphss = append(graphss, graph{elem, 1})
 			}
-			if elementX < minElementX {
-				minElementX = elementX
-			}
-			if elementY > maxElementY {
-				maxElementY = elementY
-			}
-			if elementY < minElementY {
-				minElementY = elementY
-			}
+			graf[valvenumber] = graphss
+		} else if strings.HasPrefix(r, "tunnel leads to") {
+			rsplit := strings.Split(r, "valve ")
+			to_valve := strings.TrimSpace(rsplit[1])
+			graphss = append(graphss, graph{to_valve, 1})
+			graf[valvenumber] = graphss
+		} else {
+			panic("canot find match")
 		}
 
 	}
-	fmt.Printf("Value to draw is from %v to %v. And in lower direction from %v to %v.\n", minElementX, maxElementX, minElementY, maxElementY)
-	// anullindex := minElementX
-	anullindex := inputLength - (maxElementY + 2) // (maxElementY+2)*2 + 3
-	difference := minElementX - anullindex
-	maxinference := inputLength + (maxElementY + 2)
-	fmt.Printf("%v", difference)
-	bnullindex := 0
-	a := make([][]uint8, maxElementY+3)
-	for i := range a {
-		a[i] = make([]uint8, maxElementY*2+5)
-	}
-	var lastElementX int
-	var lastElementY int
-	for _, element := range s3 {
-		elements := strings.Split(element, " -> ")
-		// fmt.Printf("processing %v\n", element)
-		for index, element2 := range elements {
-			// fmt.Printf("processing %v with index %v\n", element2, index)
-			if index == 0 {
-				elem := strings.Split(element2, ",")
-				lastElementX, _ = strconv.Atoi(elem[0])
-				lastElementY, _ = strconv.Atoi(elem[1])
-				// fmt.Printf("updated last elements %v,%v\n", lastElementX, lastElementY)
-			} else if index != 0 {
-				elem := strings.Split(element2, ",")
-				elemX, _ := strconv.Atoi(strings.TrimSpace(elem[0]))
-				elemY, _ := strconv.Atoi(strings.TrimSpace(elem[1]))
-				a = drawrockinMap(a, lastElementX, elemX, lastElementY, elemY, anullindex, bnullindex)
-				lastElementX = elemX
-				lastElementY = elemY
-				// fmt.Printf("updated last elements %v,%v\n", lastElementX, lastElementY)
-			} else {
-				fmt.Printf("why am I here")
-			}
 
+	// Algorithm to compute shortest part between all matrix elements
+	g := graf
+	dist := make(map[string]map[string]int, len(g))
+	for i := range g {
+		di := make(map[string]int, len(g))
+		for j := range g {
+			di[j] = 900000
 		}
-
+		di[i] = 0
+		dist[i] = di
 	}
-	// Fill last row with 1s
-	for ind := 0; ind < len(a[len(a)-1]); ind++ {
-		a[len(a)-1][ind] = 1
+	// fmt.Printf("%v\n", dist)
+	for u, graphs := range g {
+		for _, v := range graphs {
+			dist[u][v.to] = v.wt
+		}
 	}
-
-	// Add snow position
-	a[inputHeight][inputLength-minElementX+difference] = 5
-
-	// fmt.Printf("Printing the inital map:\n")
-	// for _, row := range a {
-	// 	fmt.Printf("%v\n", row)
-	// }
-	result := false
-	totalSnow := 0
-	// Let it snow!!!
-	for snow := 1; result == false; snow++ {
-		// for snow := 1; snow < 102; snow++ {
-		a, result = letItSnow(a, inputLength-minElementX+difference, maxElementY+3, maxinference)
-		totalSnow = snow
-
-		// fmt.Printf("the result is %v\n", result)
+	// fmt.Printf("%v\n", dist)
+	for k, dk := range dist {
+		for _, di := range dist {
+			for j, dij := range di {
+				if d := di[k] + dk[j]; dij > d {
+					di[j] = d
+				}
+			}
+		}
 	}
 
-	fmt.Printf("Snowed %v times:\n", totalSnow)
+	// Get all flows that have presuure
+	relevantFlows := []string{}
+	for key, elem := range flows {
+		if elem != 0 {
+			relevantFlows = append(relevantFlows, key)
+		}
+	}
+	fmt.Printf("%v\n", relevantFlows)
 
-	// for _, row := range a {
-	// 	fmt.Printf("%v\n", row)
-	// }
+	maxRes := 0
+	// Solve recursive
+	for i := 1; i <= len(relevantFlows)/2; i++ {
+		for v := range itertools.CombinationsStr(relevantFlows, i) {
+			res1 := solveRecur(dist, flows, 0, 0, 0, "AA", v, 26)
+			res2 := solveRecur(dist, flows, 0, 0, 0, "AA", reverseSlice(relevantFlows, v), 26)
+			res := res1 + res2
+			if res > maxRes {
+				maxRes = res
+			}
+		}
+	}
 
+	fmt.Printf("%v\n", maxRes)
+}[]
+
+func reverseSlice(full []string, part []string) []string {
+	reverseslice := []string{}
+	for _, element := range full {
+		result := true
+		for _, elementpart := range part {
+			if element == elementpart {
+				result = false
+				break
+			}
+		}
+		if result {
+			reverseslice = append(reverseslice, element)
+		}
+	}
+	return reverseslice
 }
 
-func letItSnow(a [][]uint8, snowPositionx int, maxPositionY int, maxPositionX int) ([][]uint8, bool) {
-	initialposX := snowPositionx
-	initialposY := 0
-	snowPositionY := 0
-	for {
-		nextSnowPositionY, nextSnowPositionX, _ := calculateNextPos(a, snowPositionx, snowPositionY, maxPositionY, maxPositionX)
-		if nextSnowPositionY == initialposY && initialposX == nextSnowPositionX {
-			return a, true
-		} else if nextSnowPositionY == snowPositionY && nextSnowPositionX == snowPositionx {
-			// fmt.Printf("snow didnt move\n")
-			a[snowPositionY][snowPositionx] = 2
-			return a, false
+func solveRecur(matrix map[string]map[string]int, pressures map[string]int, currentTime int, currentPressure int, currentFlow int, currentTunnel string, remaining []string, limit int) int {
+	// The score if no other valves are being opened before the $limit time
+	nScore := currentPressure + (limit-currentTime)*currentFlow
+	max := nScore
+
+	for _, v := range remaining {
+		distanceAndOpen := matrix[currentTunnel][v] + 1
+		if currentTime+distanceAndOpen < limit {
+			newTime := currentTime + distanceAndOpen
+			newPressure := currentPressure + distanceAndOpen*currentFlow
+			newFlow := currentFlow + pressures[v]
+			possibleScore := solveRecur(matrix, pressures, newTime, newPressure, newFlow, v, removeFromList(remaining, v), limit)
+			if possibleScore > max {
+				max = possibleScore
+			}
 		}
-		// fmt.Printf("value new position %v,%v\n", nextSnowPositionY, nextSnowPositionX)
-		snowPositionx = nextSnowPositionX
-		snowPositionY = nextSnowPositionY
 	}
 
-	// fmt.Printf("value new position %v,%v\n", nextSnowPositionY, nextSnowPositionX)
-	// return a
+	return max
 }
 
-func calculateNextPos(a [][]uint8, snowPositionx int, snowPositionY int, maxPositionY int, maxPositionX int) (int, int, bool) {
-	if snowPositionY+1 > maxPositionY {
-		return snowPositionY, snowPositionx, true
-	} else if a[snowPositionY+1][snowPositionx] == 0 {
-		return snowPositionY + 1, snowPositionx, false
-	} else if a[snowPositionY+1][snowPositionx] != 0 {
-		if snowPositionx-1 < 0 {
-			return snowPositionY, snowPositionx, true
-		} else if a[snowPositionY+1][snowPositionx-1] == 0 {
-			return snowPositionY + 1, snowPositionx - 1, false
-		} else if snowPositionx+1 > maxPositionX {
-			return snowPositionY, snowPositionx, true
-		} else if a[snowPositionY+1][snowPositionx+1] == 0 {
-			return snowPositionY + 1, snowPositionx + 1, false
-		} else {
-			return snowPositionY, snowPositionx, false
+func removeFromList(in []string, v string) []string {
+	new := []string{}
+	for _, i := range in {
+		if i != v {
+			new = append(new, i)
 		}
-	} else {
-		panic("help cannot find match")
 	}
-}
-
-// func checkNextPosition(a [][]uint8, snowPositionx int, snowPositionY int) string {
-
-// 	return "free"
-// }
-
-func drawrockinMap(a [][]uint8, lastx int, nextx int, lasty int, nexty int, nullindexx int, nullindexy int) [][]uint8 {
-	if lastx == nextx && lasty == nexty {
-		return a
-	} else if lastx == nextx {
-		xindex := lastx - nullindexx
-		// fmt.Printf("drawing in y direction from %v to %v on index %v \n", lasty, nexty, xindex)
-		if lasty > nexty {
-			for yindex := nexty - nullindexy; yindex <= lasty-nullindexy; yindex++ {
-				a[yindex][xindex] = 1
-			}
-			return a
-		} else if lasty < nexty {
-			for yindex := lasty - nullindexy; yindex <= nexty-nullindexy; yindex++ {
-				a[yindex][xindex] = 1
-			}
-			return a
-		} else {
-			panic("error")
-		}
-	} else if lasty == nexty {
-		yindex := lasty - nullindexy
-		// fmt.Printf("drawing in y direction from %v to %v on index %v \n", lastx, nextx, yindex)
-		if lastx > nextx {
-			for xindex := nextx - nullindexx; xindex <= lastx-nullindexx; xindex++ {
-				a[yindex][xindex] = 1
-			}
-			return a
-		} else if lastx < nextx {
-			for xindex := lastx - nullindexx; xindex <= nextx-nullindexx; xindex++ {
-				a[yindex][xindex] = 1
-			}
-			return a
-		} else {
-			panic("error")
-		}
-	} else {
-		fmt.Printf("drawing in x direction from %v to %v\n", lastx, nextx)
-		fmt.Printf("drawing in y direction from %v to %v\n", lasty, nexty)
-		panic("Cannot find options for drawing")
-	}
-
+	return new
 }
