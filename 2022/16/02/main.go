@@ -118,7 +118,7 @@ func main() {
 	}
 
 	fmt.Printf("%v\n", maxRes)
-}[]
+}
 
 func reverseSlice(full []string, part []string) []string {
 	reverseslice := []string{}
