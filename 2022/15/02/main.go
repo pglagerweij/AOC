@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
 
 // var inputFile string = "trial.txt"
-// var inputLength int = 500
-// var inputHeight int = 0
+// var indextograp int = 20
 
 var inputFile string = "input.txt"
-var inputLength int = 500
-var inputHeight int = 000
+var indextograp int = 4000000
+
+// var inputHeight int = 000
 
 func main() {
 
@@ -25,108 +26,159 @@ func main() {
 	fileContent := string(file)
 	s := strings.ReplaceAll(fileContent, "\n", ";")
 	s3 := strings.Split(s, ";")
+	// for xindex := 0; xindex <= indextograp; xindex++ {
+	// 	var result bool = false
+	// 	for yindex := 0; yindex <= indextograp; yindex++ {
+	// 		fmt.Printf("x value %v, y value %v\n", xindex, yindex)
+	// 		for _, element := range s3 {
+	// 			sensorx, sensory, beaconx, beacony := retrieveElements(element)
+	// 			distance := calculateDistance(sensorx, sensory, beaconx, beacony)
+	// 			distanceCoor := calculateDistance(sensorx, sensory, xindex, yindex)
+	// 			if distanceCoor < distance {
+	// 				result = true
+	// 				break
+	// 			}
+	// 		}
+	// 		if result == false {
+	// 			fmt.Printf("the number without support is %v, %v", xindex, yindex)
+	// 			break
+	// 		}
+	// 	}
+	// }
+	// xindex := 14
+	// yindex := 11
+	// for xindex := 0; xindex <= indextograp; xindex++ {
+	// 	for yindex := 0; yindex <= indextograp; yindex++ {
+	// 		totalresult := true
+	// 		fmt.Printf("the values are %v and %v\n", xindex, yindex)
+	// 		for _, element := range s3 {
+	// 			sensorx, sensory, beaconx, beacony := retrieveElements(element)
+	// 			distance := calculateDistance(sensorx, sensory, beaconx, beacony)
+	// 			distanceCoor := calculateDistance(sensorx, sensory, xindex, yindex)
+	// 			fmt.Printf("the values are %v and %v for sensor %v\n", distance, distanceCoor, element)
+	// 			if distance >= distanceCoor {
+	// 				totalresult = false
+	// 				break
+	// 			}
 
-	maxElementX := 500
-	minElementX := 500
-	maxElementY := inputHeight
-	minElementY := inputHeight
-	for _, element := range s3 {
-		elements := strings.Split(element, " -> ")
-		for _, element := range elements {
-			number := strings.Split(element, ",")
-			elementX, _ := strconv.Atoi(number[0])
-			elementY, _ := strconv.Atoi(number[1])
-			if elementX > maxElementX {
-				maxElementX = elementX
+	// 		}
+	// 		if totalresult == true {
+	// 			fmt.Printf("The result is %v for %v,%v\n", totalresult, xindex, yindex)
+	// 			os.Exit(3)
+	// 		}
+	// 	}
+	// }
+	// xindex := 0
+	for xindex := 0; xindex <= indextograp; xindex++ {
+		fmt.Printf("the x-index are %v\n", xindex)
+		for yindex := 0; yindex <= indextograp; {
+			totalresult := true
+			// fmt.Printf("the index are %v and %v\n", xindex, yindex)
+			for _, element := range s3 {
+				sensorx, sensory, beaconx, beacony := retrieveElements(element)
+				distance := calculateDistance(sensorx, sensory, beaconx, beacony)
+				distanceCoor := calculateDistance(sensorx, sensory, xindex, yindex)
+				// fmt.Printf("the values are %v and %v for sensor %v\n", distance, distanceCoor, element)
+				if distance >= distanceCoor {
+					// fmt.Printf("the distance is %v and %v for sensor %v\n", distance, distanceCoor, element)
+					leftover := distance - distanceCoor
+					totalresult = false
+					yindex += leftover + 1
+					break
+				}
+
 			}
-			if elementX < minElementX {
-				minElementX = elementX
-			}
-			if elementY > maxElementY {
-				maxElementY = elementY
-			}
-			if elementY < minElementY {
-				minElementY = elementY
+
+			if totalresult == true {
+				fmt.Printf("The result is %v for %v,%v\n", totalresult, xindex, yindex)
+				fmt.Printf("The result is %v\n", xindex*4000000+yindex)
+				os.Exit(3)
 			}
 		}
-
 	}
-	fmt.Printf("Value to draw is from %v to %v. And in lower direction from %v to %v.\n", minElementX, maxElementX, minElementY, maxElementY)
-	// anullindex := minElementX
-	anullindex := inputLength - (maxElementY + 2) // (maxElementY+2)*2 + 3
-	difference := minElementX - anullindex
-	maxinference := inputLength + (maxElementY + 2)
-	fmt.Printf("%v", difference)
-	bnullindex := 0
-	a := make([][]uint8, maxElementY+3)
-	for i := range a {
-		a[i] = make([]uint8, maxElementY*2+5)
-	}
-	var lastElementX int
-	var lastElementY int
-	for _, element := range s3 {
-		elements := strings.Split(element, " -> ")
-		// fmt.Printf("processing %v\n", element)
-		for index, element2 := range elements {
-			// fmt.Printf("processing %v with index %v\n", element2, index)
-			if index == 0 {
-				elem := strings.Split(element2, ",")
-				lastElementX, _ = strconv.Atoi(elem[0])
-				lastElementY, _ = strconv.Atoi(elem[1])
-				// fmt.Printf("updated last elements %v,%v\n", lastElementX, lastElementY)
-			} else if index != 0 {
-				elem := strings.Split(element2, ",")
-				elemX, _ := strconv.Atoi(strings.TrimSpace(elem[0]))
-				elemY, _ := strconv.Atoi(strings.TrimSpace(elem[1]))
-				a = drawrockinMap(a, lastElementX, elemX, lastElementY, elemY, anullindex, bnullindex)
-				lastElementX = elemX
-				lastElementY = elemY
-				// fmt.Printf("updated last elements %v,%v\n", lastElementX, lastElementY)
-			} else {
-				fmt.Printf("why am I here")
-			}
-
-		}
-
-	}
-	// Fill last row with 1s
-	for ind := 0; ind < len(a[len(a)-1]); ind++ {
-		a[len(a)-1][ind] = 1
-	}
-
-	// Add snow position
-	a[inputHeight][inputLength-minElementX+difference] = 5
-
-	// fmt.Printf("Printing the inital map:\n")
-	// for _, row := range a {
-	// 	fmt.Printf("%v\n", row)
-	// }
-	result := false
-	totalSnow := 0
-	// Let it snow!!!
-	for snow := 1; result == false; snow++ {
-		// for snow := 1; snow < 102; snow++ {
-		a, result = letItSnow(a, inputLength-minElementX+difference, maxElementY+3, maxinference)
-		totalSnow = snow
-
-		// fmt.Printf("the result is %v\n", result)
-	}
-
-	fmt.Printf("Snowed %v times:\n", totalSnow)
-
-	// for _, row := range a {
-	// 	fmt.Printf("%v\n", row)
-	// }
 
 }
 
+func drawInMapYaxis(totalSituation []uint8, sensorx int, sensory int, xnullindex int, ynullindex int, indextograp int, objecttype string) []uint8 {
+
+	xIndex := sensorx - xnullindex
+	if objecttype == "sensor" {
+		if sensory == indextograp {
+			totalSituation[xIndex] = 5
+		}
+		return totalSituation
+	} else if objecttype == "beacon" {
+		if sensory == indextograp {
+			totalSituation[xIndex] = 2
+		}
+		return totalSituation
+	} else {
+		panic("cannot find type")
+	}
+}
+
+func drawNonBeaconsYaxis(relevantYaxis []uint8, sensorx int, sensory int, xnullindex int, ynullindex int, indextograp int, distance int) []uint8 {
+
+	if sensory-distance <= indextograp && sensory+distance >= indextograp {
+		ydistance := abs(sensory - indextograp)
+		xdistance := distance - ydistance
+		for xloop := -1 * xdistance; xloop <= xdistance; xloop++ {
+			// fmt.Printf("At value x: %v, y: %v\n", index, yloop)
+			xIndex := sensorx - xnullindex - xloop
+			if relevantYaxis[xIndex] == 0 {
+				relevantYaxis[xIndex] = 1
+			}
+		}
+		return relevantYaxis
+	} else {
+		return relevantYaxis
+	}
+
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func calculateDistance(sensorx int, sensory int, beaconx int, beacony int) int {
+	xDistance := abs(sensorx - beaconx)
+	yDistance := abs(sensory - beacony)
+	return xDistance + yDistance
+}
+
+func retrieveElements(input string) (int, int, int, int) {
+	elements := strings.Split(input, ": ")
+	sensorInfo := strings.Split(elements[0], ",")
+	// fmt.Printf("%v\n", sensorInfo)
+	sensorX := strings.TrimSpace(sensorInfo[0][12:])
+	// fmt.Printf("%v\n", sensorX)
+	sensorY := strings.TrimSpace(sensorInfo[1][3:])
+	// fmt.Printf("%v\n", sensorY)
+	sensorXint, _ := strconv.Atoi(sensorX)
+	sensorYint, _ := strconv.Atoi(sensorY)
+
+	// Obtain beacon info
+	beaconInfo := strings.Split(elements[1], ",")
+	// fmt.Printf("%v\n", beaconInfo)
+	beaconX := strings.TrimSpace(beaconInfo[0][23:])
+	// fmt.Printf("%v\n", beaconX)
+	beaconY := strings.TrimSpace(beaconInfo[1][3:])
+	// fmt.Printf("%v\n", beaconY)
+	beaconXint, _ := strconv.Atoi(beaconX)
+	beaconYint, _ := strconv.Atoi(beaconY)
+
+	return sensorXint, sensorYint, beaconXint, beaconYint
+}
+
 func letItSnow(a [][]uint8, snowPositionx int, maxPositionY int, maxPositionX int) ([][]uint8, bool) {
-	initialposX := snowPositionx
-	initialposY := 0
-	snowPositionY := 0
+	snowPositionY := 1
 	for {
-		nextSnowPositionY, nextSnowPositionX, _ := calculateNextPos(a, snowPositionx, snowPositionY, maxPositionY, maxPositionX)
-		if nextSnowPositionY == initialposY && initialposX == nextSnowPositionX {
+		nextSnowPositionY, nextSnowPositionX, result := calculateNextPos(a, snowPositionx, snowPositionY, maxPositionY, maxPositionX)
+
+		if result == true {
 			return a, true
 		} else if nextSnowPositionY == snowPositionY && nextSnowPositionX == snowPositionx {
 			// fmt.Printf("snow didnt move\n")
