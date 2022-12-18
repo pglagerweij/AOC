@@ -2,343 +2,132 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"strconv"
+	"math"
+	"os"
 	"strings"
 )
+
+// var inputFile string = "triaal2.txt"
 
 // var inputFile string = "trial.txt"
 
 var inputFile string = "input.txt"
 
+type Point struct {
+	X, Y, Z int
+}
+
+func (p Point) Add(q Point) Point {
+	return Point{p.X + q.X, p.Y + q.Y, p.Z + q.Z}
+}
+
 func main() {
 
-	file, err := ioutil.ReadFile(inputFile)
-	if err != nil {
-		fmt.Printf("Could not read the file due to this %s error \n", err)
-	}
-	fileContent := string(file)
-	s := strings.Split(fileContent, "\n")
-	xnumbers := []int{}
-	ynumbers := []int{}
-	znumbers := []int{}
-	sArray := make([][3]int, 0)
-	for _, elem := range s {
-		elemsplitted := strings.Split(elem, ",")
-		x, _ := strconv.Atoi(strings.TrimSpace(elemsplitted[0]))
-		xnumbers = append(xnumbers, x)
-		y, _ := strconv.Atoi(strings.TrimSpace(elemsplitted[1]))
-		ynumbers = append(ynumbers, y)
-		z, _ := strconv.Atoi(strings.TrimSpace(elemsplitted[2]))
-		znumbers = append(znumbers, z)
-		sArray = append(sArray, [3]int{x, y, z})
+	input, _ := os.ReadFile(inputFile)
+
+	lava := map[Point]bool{}
+	minNumbers := Point{math.MaxInt, math.MaxInt, math.MaxInt}
+	maxNumbers := Point{math.MinInt, math.MinInt, math.MinInt}
+
+	for _, s := range strings.Split(strings.TrimSpace(string(input)), "\n") {
+		var p Point
+		fmt.Sscanf(s, "%d,%d,%d", &p.X, &p.Y, &p.Z)
+		lava[p] = true
+
+		minNumbers = Point{Min(p.X, minNumbers.X), Min(p.Y, minNumbers.Y), Min(p.Z, minNumbers.Z)}
+		maxNumbers = Point{Max(p.X, maxNumbers.X), Max(p.Y, maxNumbers.Y), Max(p.Z, maxNumbers.Z)}
 	}
 
-	xmin := minofslice(unique(xnumbers))
-	xmax := maxofslice(unique(xnumbers))
+	delta := []Point{
+		{-1, 0, 0}, {0, -1, 0}, {0, 0, -1},
+		{1, 0, 0}, {0, 1, 0}, {0, 0, 1},
+	}
 
-	ymin := minofslice(unique(ynumbers))
-	ymax := maxofslice(unique(ynumbers))
+	totalOutside := 0
+	for point := range lava {
+		for _, d := range delta {
+			if !lava[point.Add(d)] {
+				totalOutside += 1
+			}
+		}
 
-	zmin := minofslice(unique(znumbers))
-	zmax := maxofslice(unique(znumbers))
-	// fmt.Printf("Total grid, x from %v to %v, y from %v to %v, z from %v to %v\n", xmin, xmax, ymin, ymax, zmin, zmax)
-	airlist := make([][3]int, 0)
-	for x := xmin + 1; x <= xmax-1; x++ {
-		for y := ymin + 1; y <= ymax-1; y++ {
-			for z := zmin + 1; z <= zmax-1; z++ {
-				result := false
-				for _, allDrops := range sArray {
-					if [3]int{x, y, z} == allDrops {
-						result = true
-						break
-					}
-				}
-				if result == false {
-					airlist = append(airlist, [3]int{x, y, z})
-				}
+	}
+	fmt.Printf("The total outisde points is %v\n", totalOutside)
+
+	// Make larger grid with a lot of falses around the lava points
+	for x := minNumbers.X - 1; x <= maxNumbers.X+1; x++ {
+		for y := minNumbers.Y - 1; y <= maxNumbers.Y+1; y++ {
+			for z := minNumbers.Z - 1; z <= maxNumbers.Z+1; z++ {
+				lava[Point{x, y, z}] = lava[Point{x, y, z}]
 			}
 		}
 	}
 
-	// fmt.Printf("the total air list is %v\n", airlist)
+	rest := []Point{minNumbers}
+	visit := map[Point]struct{}{minNumbers: {}}
 
-	groupedin := getClosed(airlist, sArray, xmin, xmax, ymin, ymax, zmin, zmax)
+	totalOutside2 := 0
+	for len(rest) > 0 {
+		current := rest[0]
+		// fmt.Printf("current checking %v with length %v\n", current, len(rest))
+		rest = rest[1:]
 
-	fillTotalset := append(sArray, groupedin...)
-	fmt.Printf("the old length was %v new length %v\n", len(sArray), len(fillTotalset))
-	xnumbers = []int{}
-	ynumbers = []int{}
-	znumbers = []int{}
-	for _, elem := range fillTotalset {
-		xnumbers = append(xnumbers, elem[0])
-		ynumbers = append(ynumbers, elem[1])
-		znumbers = append(znumbers, elem[2])
-	}
-
-	totalzside := 0
-	for _, ytocheck := range unique(ynumbers) {
-		for _, xtocheck := range unique(xnumbers) {
-			zaxis := []int{}
-			for _, elem := range fillTotalset {
-				x := elem[0]
-				y := elem[1]
-				z := elem[2]
-				if y == ytocheck && x == xtocheck {
-					zaxis = append(zaxis, z)
-				}
+		for _, d := range delta {
+			nextpos := current.Add(d)
+			cube, valid := lava[nextpos]
+			_, seen := visit[nextpos]
+			if cube {
+				totalOutside2++
+			} else if valid && !seen {
+				visit[nextpos] = struct{}{}
+				rest = append(rest, nextpos)
+				// fmt.Printf("the rest is %v with length %v\n", rest, len(rest))
 			}
-
-			outsides := checkOutsides(zaxis)
-			// fmt.Printf("For side with x: %v, y: %v we have zaxis: %v with outsides %v.\n", xtocheck, ytocheck, zaxis, outsides)
-			totalzside += outsides
 		}
 	}
-
-	fmt.Printf("Total over zside is %v\n", totalzside)
-
-	totalyside := 0
-	for _, ztocheck := range unique(znumbers) {
-		for _, xtocheck := range unique(xnumbers) {
-			yaxis := []int{}
-			for _, elem := range fillTotalset {
-				x := elem[0]
-				y := elem[1]
-				z := elem[2]
-				if z == ztocheck && x == xtocheck {
-					yaxis = append(yaxis, y)
-				}
-			}
-
-			outsides := checkOutsides(yaxis)
-			// fmt.Printf("For side with x: %v, z: %v we have zaxis: %v with outsides %v.\n", xtocheck, ztocheck, yaxis, outsides)
-			totalyside += outsides
-		}
-	}
-	fmt.Printf("Total over yside is %v\n", totalyside)
-
-	totalxside := 0
-	for _, ztocheck := range unique(znumbers) {
-		for _, ytocheck := range unique(xnumbers) {
-			xaxis := []int{}
-			for _, elem := range fillTotalset {
-				x := elem[0]
-				y := elem[1]
-				z := elem[2]
-				if z == ztocheck && y == ytocheck {
-					xaxis = append(xaxis, x)
-				}
-			}
-
-			outsides := checkOutsides(xaxis)
-			// fmt.Printf("For side with x: %v, z: %v we have zaxis: %v with outsides %v.\n", ytocheck, ztocheck, xaxis, outsides)
-			totalxside += outsides
-		}
-	}
-	fmt.Printf("Total over xside is %v\n", totalxside)
-
-	totalsides := totalxside + totalyside + totalzside
-
-	fmt.Printf("Total exterior over all sides is %v\n", totalsides)
+	fmt.Printf("the total lava is %v\n", totalOutside2)
 
 }
 
-func getClosed(air [][3]int, drops [][3]int, xmin int, xmax int, ymin int, ymax int, zmin int, zmax int) [][3]int {
-	output := make([][3]int, 0)
-	for _, airDrop := range air {
-		// fmt.Printf("%v\n ", airDrop)
-		xair := airDrop[0]
-		yair := airDrop[1]
-		zair := airDrop[2]
-		xminres := false
-		for x := xmin; x < xair; x++ {
-			for _, drops := range drops {
-				// fmt.Printf("for x %v with %v\n ", x, drops)
-				if [3]int{x, yair, zair} == drops {
-					xminres = true
-					break
-				}
-			}
-		}
-		if xminres == true {
-			xmaxres := false
-			for x := xmax; x > xair; x-- {
-				for _, drops := range drops {
-					// fmt.Printf("for x %v with %v\n ", x, drops)
-					if [3]int{x, yair, zair} == drops {
-						xmaxres = true
-						break
-					}
-				}
-			}
-
-			if xmaxres == true {
-				yminres := false
-				for y := ymin; y < yair; y++ {
-					for _, drops := range drops {
-						// fmt.Printf("for y %v with %v\n ", y, drops)
-						if [3]int{xair, y, zair} == drops {
-							yminres = true
-							break
-						}
-					}
-				}
-				if yminres == true {
-					ymaxres := false
-					for y := ymax; y > yair; y-- {
-						for _, drops := range drops {
-							// fmt.Printf("for y %v with %v\n ", y, drops)
-							if [3]int{xair, y, zair} == drops {
-								ymaxres = true
-								break
-							}
-						}
-					}
-
-					if ymaxres == true {
-						zminres := false
-						for z := zmin; z < zair; z++ {
-							for _, drops := range drops {
-								// fmt.Printf("for z %v with %v\n ", z, drops)
-								if [3]int{xair, yair, z} == drops {
-									zminres = true
-									break
-								}
-							}
-						}
-						if zminres == true {
-							zmaxres := false
-							for z := zmax; z > zair; z-- {
-								for _, drops := range drops {
-									// fmt.Printf("for z %v with %v\n ", z, drops)
-									if [3]int{xair, yair, z} == drops {
-										zmaxres = true
-										break
-									}
-								}
-							}
-
-							if zmaxres == true {
-								output = append(output, airDrop)
-							}
-
-						}
-					}
-				}
-			}
-		}
-
+func Min(a, b int) int {
+	if a < b {
+		return a
 	}
-
-	return output
-}
-func checkArray(start [][3]int, check [][3]int) [][3]int {
-	group := start
-	elemensweDelete := make([][3]int, 0)
-	for _, startElem := range start {
-		for _, checkElem := range check {
-			if abs(startElem[0]-checkElem[0])+abs(startElem[1]-checkElem[1])+abs(startElem[2]-checkElem[2]) == 1 {
-				group = append(group, checkElem)
-				elemensweDelete = append(elemensweDelete, checkElem)
-			}
-		}
-	}
-
-	if len(elemensweDelete) == 0 {
-		return group
-	} else {
-		checkleft := make([][3]int, 0)
-		for _, elem := range check {
-			result := false
-			for _, elemDel := range elemensweDelete {
-				if elem == elemDel {
-					result = true
-					break
-				}
-			}
-			if result == false {
-				checkleft = append(checkleft, elem)
-			}
-		}
-		return checkArray(group, checkleft)
-	}
-
+	return b
 }
 
-func checkOutsides(axis []int) int {
-	outsides := 0
-	var lastindex int = -30
-	for loop := 0; loop <= 21; loop++ {
-		if elementExist(axis, loop) {
-			// fmt.Printf("Found match %v\n", loop)
-			if loop == lastindex+1 {
-				lastindex = loop
-				// fmt.Printf("We dont add an outside%v\n", loop)
-			} else {
-				lastindex = loop
-				if outsides == 0 {
-					outsides += 1
-				} else {
-					outsides += 2
-				}
-				// fmt.Printf("Add an outside %v\n", outsides)
-			}
-		}
+func Max(a, b int) int {
+	if a > b {
+		return a
 	}
-	if outsides > 0 {
-		outsides += 1
-	}
-
-	return outsides
+	return b
 }
 
-func elementExist(input []int, tocheck int) bool {
-	var result bool = false
-	for _, x := range input {
-		if x == tocheck {
-			result = true
-			break
-		}
-	}
+// for x := min.X - 1; x <= max.X+1; x++ {
+// 	for y := min.Y - 1; y <= max.Y+1; y++ {
+// 		for z := min.Z - 1; z <= max.Z+1; z++ {
+// 			lava[Point{x, y, z}] = lava[Point{x, y, z}]
+// 		}
+// 	}
+// }
 
-	return result
-}
+// queue := []Point{min}
+// visited := map[Point]struct{}{min: {}}
 
-func unique(intSlice []int) []int {
-	keys := make(map[int]bool)
-	list := []int{}
-	for _, entry := range intSlice {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
-}
+// part2 := 0
+// for len(queue) > 0 {
+// 	cur := queue[0]
+// 	queue = queue[1:]
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
+// 	for _, d := range delta {
+// 		next := cur.Add(d)
 
-func maxofslice(x []int) int {
-	max := x[0]
-	for _, xelem := range x {
-		if xelem > max {
-			max = xelem
-		}
-	}
-	return max
-}
-
-func minofslice(x []int) int {
-	min := x[0]
-	for _, xelem := range x {
-		if xelem < min {
-			min = xelem
-		}
-	}
-	return min
-}
+// 		if cube, valid := lava[next]; cube {
+// 			part2++
+// 		} else if _, seen := visited[next]; valid && !seen {
+// 			visited[next] = struct{}{}
+// 			queue = append(queue, next)
+// 		}
+// 	}
+// }
+// fmt.Println(part2)
