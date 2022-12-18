@@ -102,32 +102,3 @@ func Max(a, b int) int {
 	}
 	return b
 }
-
-// for x := min.X - 1; x <= max.X+1; x++ {
-// 	for y := min.Y - 1; y <= max.Y+1; y++ {
-// 		for z := min.Z - 1; z <= max.Z+1; z++ {
-// 			lava[Point{x, y, z}] = lava[Point{x, y, z}]
-// 		}
-// 	}
-// }
-
-// queue := []Point{min}
-// visited := map[Point]struct{}{min: {}}
-
-// part2 := 0
-// for len(queue) > 0 {
-// 	cur := queue[0]
-// 	queue = queue[1:]
-
-// 	for _, d := range delta {
-// 		next := cur.Add(d)
-
-// 		if cube, valid := lava[next]; cube {
-// 			part2++
-// 		} else if _, seen := visited[next]; valid && !seen {
-// 			visited[next] = struct{}{}
-// 			queue = append(queue, next)
-// 		}
-// 	}
-// }
-// fmt.Println(part2)
