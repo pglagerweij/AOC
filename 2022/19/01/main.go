@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-var inputFile string = "trial.txt"
+// var inputFile string = "trial.txt"
 
-// var inputFile string = "input.txt"
+var inputFile string = "input.txt"
 
 var maxSteps int = 24
 
@@ -32,6 +32,8 @@ func (p Materials) Min(q Materials) Materials {
 func main() {
 	input, _ := os.ReadFile(inputFile)
 	// convert the file binary into a string using string
+
+	totalResult := 0
 	for _, s := range strings.Split(strings.TrimSpace(string(input)), "\n") {
 		var oreRobotCost Materials = Materials{0, 0, 0, 0}
 		var clayRobotCost Materials = Materials{0, 0, 0, 0}
@@ -41,7 +43,7 @@ func main() {
 		var robots Materials = Materials{1, 0, 0, 0}
 		var currentStock Materials = Materials{0, 0, 0, 0}
 		var blueprint int
-		var maxTime int = 24
+		var maxTime int = 25
 
 		choices := make(map[string]Choice)
 
@@ -60,58 +62,69 @@ func main() {
 		var time int = 1
 		fmt.Printf("This is blueprint %v\n", blueprint)
 		choicemap := []string{}
-		totalGeode, finalchoice := solveRecur(choices, currentStock, robots, time, maxTime, choicemap)
+		totalGeode, _ := solveRecur2(choices, currentStock, robots, time, maxTime, choicemap, Materials{0, 0, 0, 0})
 
 		fmt.Printf("for blueprint %v the maximum number of Geode is %v\n", blueprint, totalGeode)
-		fmt.Printf("The choices are %v\n", finalchoice)
-		os.Exit(3)
+		// fmt.Printf("The choices are %v\n", finalchoice)
+		result := blueprint * totalGeode
+		totalResult += result
 	}
-
+	fmt.Printf("The total result is %v", totalResult)
 }
 
-func solveRecur(choices map[string]Choice, currentStock Materials, robots Materials, time int, limit int, choicemap []string) (int, []string) {
+func solveRecur2(choices map[string]Choice, currentStock Materials, robots Materials, time int, limit int, choicemap []string, lastStock Materials) (int, []string) {
 
 	geodeScore := currentStock.geode + (limit-time)*robots.geode
 	max := geodeScore
-	final_choice := choicemap
+	finalChoice := choicemap
 	// fmt.Printf("the time is : %v\n", time)
 	if time < limit {
 		for choice, v := range choices {
-			// fmt.Printf("%v\n", choice)
-			var result bool
-			currentStock, result = buyRobot(v.cost, currentStock)
+			newStock, result := buyRobot(v.cost, currentStock, choicemap, lastStock)
 			if result == false {
-				// fmt.Printf("Cannot do choice %v\n", choice)
 				continue
 			}
-			// fmt.Printf("we bought robots %v\n", choice)
-			currentStock = currentStock.Add(robots)
-			// fmt.Printf("we are now collecting materials %v, current stock is %v\n", robots, currentStock)
-			robots = robots.Add(v.robots)
-			// fmt.Printf("we added  	 %v robots, we now have %v robots\n", v.robots, robots)
-			var possibleScore int
-			var finalchoice []string
-			choicemap_run := append(choicemap, choice)
-			possibleScore, finalchoice = solveRecur(choices, currentStock, robots, time+1, limit, choicemap_run)
-
+			// fmt.Printf("We bough robot %v and have now a stock of %v \n", choice, newStock)
+			stock := newStock.Add(robots)
+			// fmt.Printf("we are now collecting materials %v, current stock is %v\n", robots, stock)
+			robotsinloop := robots.Add(v.robots)
+			// fmt.Printf("we added %v robots, we now have %v robots\n", v.robots, robotsinloop)
+			choicesMade := append(choicemap, choice)
+			// fmt.Printf("the time is : %v with choicemap %v\n", time, choicesMade)
+			possibleScore, choice := solveRecur2(choices, stock, robotsinloop, time+1, limit, choicesMade, currentStock)
 			if possibleScore > max {
-				fmt.Printf("the time is : %v with choicemap %v\n", time, finalchoice)
 				max = possibleScore
-				final_choice = finalchoice
+				finalChoice = choice
 			}
 		}
 	}
-
-	return max, final_choice
+	// fmt.Printf("at the end of the time limit %v\nCurrent stock of geodes is %v we added %v we now have %v\n", time, currentStock.ore, (limit-time)*robots.ore, geodeScore)
+	return max, finalChoice
 }
 
-func buyRobot(in Materials, currentStock Materials) (Materials, bool) {
+func buyRobot(in Materials, currentStock Materials, choicemap []string, lastStock Materials) (Materials, bool) {
 	newStock := currentStock.Min(in)
+	LatestoptionStock := lastStock.Min(in)
 	nothing := Materials{0, 0, 0, 0}
 	result := newStock.clay >= 0 && newStock.ore >= 0 && newStock.obsidian >= 0
-	if (in.clay == currentStock.clay && currentStock.clay != 0 && result) || (in.ore == currentStock.ore && currentStock.ore != 0 && result) || (in.obsidian == currentStock.obsidian && currentStock.obsidian != 0 && result) || (in == nothing && result) {
-		return newStock, true
+	resultLatest := LatestoptionStock.clay >= 0 && LatestoptionStock.ore >= 0 && LatestoptionStock.obsidian >= 0
+	var lastturn string
+	if len(choicemap) != 0 {
+		lastturn = choicemap[len(choicemap)-1]
+		// Don't take an action if you could take it last turn and it is not nothing
+		if resultLatest && lastturn == "nothing" && in != nothing {
+			return currentStock, false
+		} else if result {
+			return newStock, true
+		} else {
+			return currentStock, false
+		}
 	} else {
-		return currentStock, false
+		if result {
+			return newStock, true
+		} else {
+			return currentStock, false
+		}
 	}
+
 }

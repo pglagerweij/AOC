@@ -2,168 +2,146 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"strconv"
+	"os"
 	"strings"
-
-	"github.com/ernestosuarez/itertools"
 )
 
 // var inputFile string = "trial.txt"
 
 var inputFile string = "input.txt"
 
-var maxSteps int = 30
+var maxSteps int = 24
 
-type graph struct {
-	to string
-	wt int
+type Materials struct {
+	ore, clay, obsidian, geode int
+}
+
+type Choice struct {
+	cost   Materials
+	robots Materials
+}
+
+func (p Materials) Add(q Materials) Materials {
+	return Materials{p.ore + q.ore, p.clay + q.clay, p.obsidian + q.obsidian, p.geode + q.geode}
+}
+
+func (p Materials) Min(q Materials) Materials {
+	return Materials{p.ore - q.ore, p.clay - q.clay, p.obsidian - q.obsidian, p.geode - q.geode}
 }
 
 func main() {
-
-	file, err := ioutil.ReadFile(inputFile)
-	if err != nil {
-		fmt.Printf("Could not read the file due to this %s error \n", err)
-	}
+	input, _ := os.ReadFile(inputFile)
 	// convert the file binary into a string using string
-	fileContent := string(file)
-	s := strings.Split(fileContent, "\n")
 
-	var flows map[string]int = make(map[string]int)
-	valves := make([]string, len(s))
+	totalResult := 1
+	for _, s := range strings.Split(strings.TrimSpace(string(input)), "\n") {
+		var oreRobotCost Materials = Materials{0, 0, 0, 0}
+		var clayRobotCost Materials = Materials{0, 0, 0, 0}
+		var obsidianRobotCost Materials = Materials{0, 0, 0, 0}
+		var geodeRobotCost Materials = Materials{0, 0, 0, 0}
+		var maxCost Materials
+		var robots Materials = Materials{1, 0, 0, 0}
+		var currentStock Materials = Materials{0, 0, 0, 0}
+		var blueprint int
+		var maxTime int = 33
 
-	graf := make(map[string][]graph, len(valves))
-	for index, element := range s {
-		splitted := strings.Split(element, "; ")
-		l := splitted[0]
-		lsplit := strings.Split(l, "=")
-		flowrate, _ := strconv.Atoi(strings.TrimSpace(lsplit[1]))
-		valvenumber := l[6:8]
-		valves[index] = valvenumber
-		// fmt.Printf("in valve %v the flow is %v\n", valvenumber, flowrate)
-		flows[valvenumber] = flowrate
+		choices := make(map[string]Choice)
 
-		// Right side
-		r := splitted[1]
-		graphss := []graph{}
-		if strings.HasPrefix(r, "tunnels lead to") {
-			rsplit := strings.Split(r, "valves ")
-			to_valves := strings.Split(strings.TrimSpace(rsplit[1]), ", ")
-			// fmt.Printf("%v\n", to_valves)
+		fmt.Sscanf(s, "Blueprint %d: Each ore robot costs %d ore. Each clay robot costs %d ore. Each obsidian robot costs %d ore and %d clay. Each geode robot costs %d ore and %d obsidian.", &blueprint, &oreRobotCost.ore, &clayRobotCost.ore, &obsidianRobotCost.ore, &obsidianRobotCost.clay, &geodeRobotCost.ore, &geodeRobotCost.obsidian)
+		choices["nothing"] = Choice{cost: Materials{0, 0, 0, 0}, robots: Materials{0, 0, 0, 0}}
+		choices["ore"] = Choice{cost: oreRobotCost, robots: Materials{1, 0, 0, 0}}
+		maxCost = oreRobotCost
+		choices["clay"] = Choice{cost: clayRobotCost, robots: Materials{0, 1, 0, 0}}
+		maxCost = Materials{Max(maxCost.ore, clayRobotCost.ore), Max(maxCost.clay, clayRobotCost.clay), Max(maxCost.obsidian, clayRobotCost.obsidian), 0}
+		choices["obsidian"] = Choice{cost: obsidianRobotCost, robots: Materials{0, 0, 1, 0}}
+		maxCost = Materials{Max(maxCost.ore, obsidianRobotCost.ore), Max(maxCost.clay, obsidianRobotCost.clay), Max(maxCost.obsidian, obsidianRobotCost.obsidian), 0}
+		choices["geode"] = Choice{cost: geodeRobotCost, robots: Materials{0, 0, 0, 1}}
+		maxCost = Materials{Max(maxCost.ore, geodeRobotCost.ore), Max(maxCost.clay, geodeRobotCost.clay), Max(maxCost.obsidian, geodeRobotCost.obsidian), 0}
 
-			for _, elem := range to_valves {
-				graphss = append(graphss, graph{elem, 1})
-			}
-			graf[valvenumber] = graphss
-		} else if strings.HasPrefix(r, "tunnel leads to") {
-			rsplit := strings.Split(r, "valve ")
-			to_valve := strings.TrimSpace(rsplit[1])
-			graphss = append(graphss, graph{to_valve, 1})
-			graf[valvenumber] = graphss
-		} else {
-			panic("canot find match")
+		for ind, v := range choices {
+			fmt.Printf("%v\n", ind)
+			fmt.Printf("%v\n", v.cost)
+			fmt.Printf("%v\n", v.robots)
 		}
 
-	}
+		fmt.Printf("maxcost are %v\n", maxCost)
 
-	// Algorithm to compute shortest part between all matrix elements
-	g := graf
-	dist := make(map[string]map[string]int, len(g))
-	for i := range g {
-		di := make(map[string]int, len(g))
-		for j := range g {
-			di[j] = 900000
-		}
-		di[i] = 0
-		dist[i] = di
-	}
-	// fmt.Printf("%v\n", dist)
-	for u, graphs := range g {
-		for _, v := range graphs {
-			dist[u][v.to] = v.wt
-		}
-	}
-	// fmt.Printf("%v\n", dist)
-	for k, dk := range dist {
-		for _, di := range dist {
-			for j, dij := range di {
-				if d := di[k] + dk[j]; dij > d {
-					di[j] = d
-				}
-			}
-		}
-	}
+		var time int = 1
+		fmt.Printf("This is blueprint %v\n", blueprint)
+		choicemap := []string{}
+		totalGeode, _ := solveRecur2(choices, currentStock, robots, time, maxTime, choicemap, Materials{0, 0, 0, 0}, maxCost)
 
-	// Get all flows that have presuure
-	relevantFlows := []string{}
-	for key, elem := range flows {
-		if elem != 0 {
-			relevantFlows = append(relevantFlows, key)
-		}
+		fmt.Printf("for blueprint %v the maximum number of Geode is %v\n", blueprint, totalGeode)
+		// fmt.Printf("The choices are %v\n", finalchoice)
+		totalResult = totalResult * totalGeode
 	}
-	fmt.Printf("%v\n", relevantFlows)
-
-	maxRes := 0
-	// Solve recursive
-	for i := 1; i <= len(relevantFlows)/2; i++ {
-		for v := range itertools.CombinationsStr(relevantFlows, i) {
-			res1 := solveRecur(dist, flows, 0, 0, 0, "AA", v, 26)
-			res2 := solveRecur(dist, flows, 0, 0, 0, "AA", reverseSlice(relevantFlows, v), 26)
-			res := res1 + res2
-			if res > maxRes {
-				maxRes = res
-			}
-		}
-	}
-
-	fmt.Printf("%v\n", maxRes)
+	fmt.Printf("The total result is %v", totalResult)
 }
 
-func reverseSlice(full []string, part []string) []string {
-	reverseslice := []string{}
-	for _, element := range full {
-		result := true
-		for _, elementpart := range part {
-			if element == elementpart {
-				result = false
-				break
+func solveRecur2(choices map[string]Choice, currentStock Materials, robots Materials, time int, limit int, choicemap []string, lastStock Materials, maxCost Materials) (int, []string) {
+
+	geodeScore := currentStock.geode + (limit-time)*robots.geode
+	max := geodeScore
+	finalChoice := choicemap
+	// fmt.Printf("the time is : %v\n", time)
+	if time < limit {
+		for choice, v := range choices {
+			checkmax := robots.Add(v.robots).Min(maxCost)
+			if checkmax.clay > 0 || checkmax.ore > 0 || checkmax.obsidian > 0 {
+				continue
 			}
-		}
-		if result {
-			reverseslice = append(reverseslice, element)
-		}
-	}
-	return reverseslice
-}
-
-func solveRecur(matrix map[string]map[string]int, pressures map[string]int, currentTime int, currentPressure int, currentFlow int, currentTunnel string, remaining []string, limit int) int {
-	// The score if no other valves are being opened before the $limit time
-	nScore := currentPressure + (limit-currentTime)*currentFlow
-	max := nScore
-
-	for _, v := range remaining {
-		distanceAndOpen := matrix[currentTunnel][v] + 1
-		if currentTime+distanceAndOpen < limit {
-			newTime := currentTime + distanceAndOpen
-			newPressure := currentPressure + distanceAndOpen*currentFlow
-			newFlow := currentFlow + pressures[v]
-			possibleScore := solveRecur(matrix, pressures, newTime, newPressure, newFlow, v, removeFromList(remaining, v), limit)
+			newStock, result := buyRobot(v.cost, currentStock, choicemap, lastStock)
+			if result == false {
+				continue
+			}
+			// fmt.Printf("We bough robot %v and have now a stock of %v \n", choice, newStock)
+			stock := newStock.Add(robots)
+			// fmt.Printf("we are now collecting materials %v, current stock is %v\n", robots, stock)
+			robotsinloop := robots.Add(v.robots)
+			// fmt.Printf("we added %v robots, we now have %v robots\n", v.robots, robotsinloop)
+			choicesMade := append(choicemap, choice)
+			// fmt.Printf("the time is : %v with choicemap %v\n", time, choicesMade)
+			possibleScore, choice := solveRecur2(choices, stock, robotsinloop, time+1, limit, choicesMade, currentStock, maxCost)
 			if possibleScore > max {
 				max = possibleScore
+				finalChoice = choice
 			}
 		}
 	}
-
-	return max
+	// fmt.Printf("at the end of the time limit %v\nCurrent stock of geodes is %v we added %v we now have %v\n", time, currentStock.ore, (limit-time)*robots.ore, geodeScore)
+	return max, finalChoice
 }
 
-func removeFromList(in []string, v string) []string {
-	new := []string{}
-	for _, i := range in {
-		if i != v {
-			new = append(new, i)
+func buyRobot(in Materials, currentStock Materials, choicemap []string, lastStock Materials) (Materials, bool) {
+	newStock := currentStock.Min(in)
+	LatestoptionStock := lastStock.Min(in)
+	nothing := Materials{0, 0, 0, 0}
+	result := newStock.clay >= 0 && newStock.ore >= 0 && newStock.obsidian >= 0
+	resultLatest := LatestoptionStock.clay >= 0 && LatestoptionStock.ore >= 0 && LatestoptionStock.obsidian >= 0
+	var lastturn string
+	if len(choicemap) != 0 {
+		lastturn = choicemap[len(choicemap)-1]
+		// Don't take an action if you could take it last turn and it is not nothing
+		if resultLatest && lastturn == "nothing" && in != nothing {
+			return currentStock, false
+		} else if result {
+			return newStock, true
+		} else {
+			return currentStock, false
+		}
+	} else {
+		if result {
+			return newStock, true
+		} else {
+			return currentStock, false
 		}
 	}
-	return new
+
+}
+
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
