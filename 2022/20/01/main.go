@@ -60,10 +60,15 @@ func main() {
 func updatSlice(iterationSlice []totalSlice, inputelem totalSlice, totalLength int) []totalSlice {
 	for index, adjustedElem := range iterationSlice {
 		if inputelem == adjustedElem {
-			stepsToMove := inputelem.value % totalLength
-			newIndex := modLikePython(index+stepsToMove, totalLength)
+			stepsToMove := inputelem.value
+			newIndex := modLikePython(index+stepsToMove, totalLength-1)
+			// if newIndex == 0 {
+			// 	newIndex = totalLength - 1
+			// }
 			// fmt.Printf("The element %v is now at index %v and we are moving it %v and is moved to index %v\n", adjustedElem.value, index, stepsToMove, newIndex)
-			if newIndex == 0 {
+			if newIndex == index {
+				return iterationSlice
+			} else if newIndex == 0 {
 				iterationSlice = insert(RemoveIndex(iterationSlice, index), totalLength-1, adjustedElem)
 			} else if index < newIndex {
 				iterationSlice = insert(RemoveIndex(iterationSlice, index), newIndex, adjustedElem)
@@ -99,25 +104,10 @@ func RemoveIndex(s []totalSlice, index int) []totalSlice {
 	return append(ret, s[index+1:]...)
 }
 
-// func modLikePython(d, m int) int {
-// 	var res int = d % m
-// 	if res < 0 && m > 0 {
-// 		return res + m
-// 	}
-// 	return res
-// }
-
 func modLikePython(d, m int) int {
-	if d < m && d > 0 {
-		return d
-	} else if d%m == 0 && d < 2*m {
-		return 0
-	} else if (d%m < 0) && (m > 0) && (-d <= m) {
-		return d%m + m - 1
-	} else if d%m > 0 && d < 2*m {
-		return d%m + 1
-	} else {
-		panic("help")
+	var res int = d % m
+	if res < 0 && m > 0 {
+		return res + m
 	}
-
+	return res
 }

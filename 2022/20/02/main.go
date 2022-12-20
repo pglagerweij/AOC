@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-var inputFile string = "trial.txt"
+// var inputFile string = "trial.txt"
 
 var decryptionKey int = 811589153
 
-// var inputFile string = "input.txt"
+var inputFile string = "input.txt"
 
 var indexToCheck []int = []int{1000, 2000, 3000}
 
@@ -65,8 +65,8 @@ func main() {
 func updatSlice(iterationSlice []totalSlice, inputelem totalSlice, totalLength int) []totalSlice {
 	for index, adjustedElem := range iterationSlice {
 		if inputelem == adjustedElem {
-			stepsToMove := inputelem.value % totalLength
-			newIndex := modLikePython(index+stepsToMove, totalLength)
+			stepsToMove := inputelem.value
+			newIndex := modLikePython(index+stepsToMove, totalLength-1)
 			// fmt.Printf("The element %v is now at index %v and we are moving it %v and is moved to index %v\n", adjustedElem.value, index, stepsToMove, newIndex)
 			if newIndex == 0 {
 				iterationSlice = insert(RemoveIndex(iterationSlice, index), totalLength-1, adjustedElem)
@@ -107,15 +107,9 @@ func RemoveIndex(s []totalSlice, index int) []totalSlice {
 }
 
 func modLikePython(d, m int) int {
-	if d < m && d > 0 {
-		return d
+	var res int = d % m
+	if res < 0 && m > 0 {
+		return res + m
 	}
-	if d%m == 0 {
-		return 0
-	}
-	if d%m < 0 && m > 0 {
-		return d%m + m - 1
-	}
-	var res int = d%m + 1
 	return res
 }
