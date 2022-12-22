@@ -32,10 +32,10 @@ func main() {
 	// Loop over instructions
 	for _, s := range strings.Split(strings.ReplaceAll(strings.ReplaceAll(instructions, "R", ";R;"), "L", ";L;"), ";") {
 		if s == "L" {
-			currentPosition = (currentPosition - 1) % 4
+			currentPosition = modLikePython(currentPosition-1, 4)
 			continue
 		} else if s == "R" {
-			currentPosition = (currentPosition + 1) % 4
+			currentPosition = modLikePython(currentPosition+1, 4)
 			continue
 		}
 
@@ -44,4 +44,12 @@ func main() {
 
 	}
 
+}
+
+func modLikePython(d, m int) int {
+	var res int = d % m
+	if res < 0 && m > 0 {
+		return res + m
+	}
+	return res
 }
